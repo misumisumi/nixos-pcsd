@@ -1,6 +1,4 @@
 final: prev: {
-  pyagentx = final.callPackage ./pyagentx { };
-
   pcs = final.callPackage ./pcs { };
 
   pcs-web-ui = final.callPackage ./pcs-web-ui { };
@@ -20,6 +18,7 @@ final: prev: {
       pythonPackagesOverlays = (prev.pythonPackagesOverlays or [ ]) ++ [
         (pfinal: pprev: {
           linstor-api-py = final.callPackage ./linstor-api-py { };
+          pyagentx = final.callPackage ./pyagentx { };
         })
       ];
       self = prev.python3.override {
