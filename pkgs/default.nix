@@ -1,13 +1,32 @@
 final: prev: {
-  pyagentx = final.callPackage ./pyagentx {};
+  pyagentx = final.callPackage ./pyagentx { };
 
-  pcs = final.callPackage ./pcs {};
+  pcs = final.callPackage ./pcs { };
 
-  pcs-web-ui = final.callPackage ./pcs-web-ui {};
+  pcs-web-ui = final.callPackage ./pcs-web-ui { };
 
-  pacemaker = final.callPackage ./pacemaker {};
+  pacemaker = final.callPackage ./pacemaker { };
 
-  resource-agents = final.callPackage ./resource-agents {};
+  resource-agents = final.callPackage ./resource-agents { };
 
-  ocf-resource-agents = final.callPackage ./ocf-resource-agents {};
+  ocf-resource-agents = final.callPackage ./ocf-resource-agents { };
+
+  inherit (final.callPackage ./linstor-server { }) linstor-controller linstor-satellite;
+
+  linstor-client = final.callPackage ./linstor-client { };
+
+  python3 =
+    let
+      pythonPackagesOverlays = (prev.pythonPackagesOverlays or [ ]) ++ [
+        (pfinal: pprev: {
+          linstor-api-py = final.callPackage ./linstor-api-py { };
+        })
+      ];
+      self = prev.python3.override {
+        inherit self;
+        packageOverrides = prev.lib.composeManyExtensions pythonPackagesOverlays;
+      };
+    in
+    self;
+  python3Packages = final.python3.pkgs;
 }

@@ -1,6 +1,6 @@
 rec {
   nixConfig = {
-    extra-substituters = ["https://pcsd.cachix.org"];
+    extra-substituters = [ "https://pcsd.cachix.org" ];
     extra-trusted-public-keys = [
       "pcsd.cachix.org-1:PS4IaaAiEdfaffVlQf/veW+H5T1RAncqNhxJzW9v9Lc="
     ];
@@ -21,89 +21,103 @@ rec {
     };
   };
 
-  outputs = {
-    self,
-    systems,
-    nixpkgs,
-    ...
-  }: let
-    perSystem = attrs:
-      nixpkgs.lib.genAttrs (import systems) (system:
-        attrs (import nixpkgs {
-          inherit system;
-          overlays = [self.overlays.default];
-        }));
-  in {
-    packages = perSystem (pkgs: rec {
-      default = pcs;
-      docs = pkgs.callPackage ./docs {inherit self;};
+  outputs =
+    {
+      self,
+      systems,
+      nixpkgs,
+      ...
+    }:
+    let
+      perSystem =
+        attrs:
+        nixpkgs.lib.genAttrs (import systems) (
+          system:
+          attrs (
+            import nixpkgs {
+              inherit system;
+              overlays = [ self.overlays.default ];
+            }
+          )
+        );
+    in
+    {
+      packages = perSystem (pkgs: rec {
+        default = pcs;
+        docs = pkgs.callPackage ./docs { inherit self; };
 
-      inherit
-        (pkgs)
-        pyagentx
-        pcs
-        pcs-web-ui
-        pacemaker
-        resource-agents
-        ocf-resource-agents
-        ;
-    });
+        inherit (pkgs)
+          pyagentx
+          pcs
+          pcs-web-ui
+          pacemaker
+          resource-agents
+          ocf-resource-agents
+          linstor-controller
+          linstor-satellite
+          linstor-client
+          ;
+        inherit (pkgs.python3Packages) linstor-api-py;
+      });
 
-    overlays = {
-      pcsd = import ./pkgs;
-      default = self.overlays.pcsd;
-    };
-
-    nixosModules = {
-      pacemaker = import ./modules/pacemaker.nix self;
-      pcsd = import ./modules self nixConfig;
-      default = self.nixosModules.pcsd;
-    };
-
-    formatter = perSystem (pkgs: pkgs.alejandra);
-
-    devShells = perSystem (pkgs: {
-      update = pkgs.mkShell {
-        packages = with pkgs; [
-          alejandra
-          git
-          bundler
-          bundix
-
-          (writeShellApplication {
-            name = "updateGems";
-            runtimeInputs = [bundler bundix];
-
-            text = ''
-              cd ./pkgs/pcs || exit
-              rm Gemfile.lock gemset.nix
-              bundler
-              bundix
-            '';
-          })
-
-          common-updater-scripts
-          jq
-          nix-prefetch-git
-          nix-prefetch-github
-          nix-prefetch-scripts
-          nix-update
-        ];
+      overlays = {
+        pcsd = import ./pkgs;
+        default = self.overlays.pcsd;
       };
 
-      docs = let
-        inputs = with pkgs; [
-          git
-          nix
-          mkdocs
-          ghp-import
-          python3Packages.mkdocs-material
-          python3Packages.pygments
-        ];
-      in
-        pkgs.mkShell {
-          packages =
-            [
+      nixosModules = {
+        pacemaker = import ./modules/pacemaker.nix self;
+        pcsd = import ./modules self nixConfig;
+        default = self.nixosModules.pcsd;
+      };
+
+      formatter = perSystem (pkgs: pkgs.alejandra);
+
+      devShells = perSystem (pkgs: {
+        update = pkgs.mkShell {
+          packages = with pkgs; [
+            alejandra
+            git
+            bundler
+            bundix
+
+            (writeShellApplication {
+              name = "updateGems";
+              runtimeInputs = [
+                bundler
+                bundix
+              ];
+
+              text = ''
+                cd ./pkgs/pcs || exit
+                rm Gemfile.lock gemset.nix
+                bundler
+                bundix
+              '';
+            })
+
+            common-updater-scripts
+            jq
+            nix-prefetch-git
+            nix-prefetch-github
+            nix-prefetch-scripts
+            nix-update
+          ];
+        };
+
+        docs =
+          let
+            inputs = with pkgs; [
+              git
+              nix
+              mkdocs
+              ghp-import
+              python3Packages.mkdocs-material
+              python3Packages.pygments
+            ];
+          in
+          pkgs.mkShell {
+            packages = [
               (pkgs.writeShellApplication {
                 name = "localDeploy";
                 runtimeInputs = inputs;
@@ -117,7 +131,7 @@ rec {
               })
             ]
             ++ inputs;
-        };
-    });
-  };
+          };
+      });
+    };
 }
