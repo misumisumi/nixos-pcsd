@@ -3,14 +3,14 @@
   stdenv,
   gradle,
   protobuf_31,
-  openjdk11,
+  openjdk,
   makeWrapper,
   fetchFromGitHub,
   python3,
   runtimeShell,
 }:
 let
-  version = "1.32.3";
+  version = "1.33.1";
 
   common =
     pname:
@@ -23,7 +23,7 @@ let
         tag = "v${finalAttrs.version}";
         fetchSubmodules = true;
         leaveDotGit = true;
-        hash = "sha256-R3ScK9yvKid3RTr7NInrSIMAB26v3o62ZRRJKKb7K98=";
+        hash = "sha256-w0E0aVENW2ZFBdgqz0TuLWi/LhP3hBtcHNjXtDIIKTE=";
       };
 
       nativeBuildInputs = [
@@ -33,7 +33,7 @@ let
         python3
       ];
       buildInputs = [
-        openjdk11
+        openjdk
       ];
       postPatch =
         let
@@ -51,7 +51,7 @@ let
         '';
       gradleFlags = [
         "-PversionOverride=${finalAttrs.version}"
-        "-Dorg.gradle.java.home=${openjdk11}"
+        "-Dorg.gradle.java.home=${openjdk}"
       ];
 
       # if the package has dependencies, mitmCache must be set
@@ -95,12 +95,24 @@ let
           substituteInPlace "$file" \
             --replace-warn "#!/bin/sh" "#!${runtimeShell}"
           wrapProgram "$file" \
-            --set JAVA_HOME ${openjdk11}
+            --set JAVA_HOME ${openjdk}
         done < <(find $out/bin -type f)
       '';
+      passthru.updateOptions = [
+        "--override-filename"
+        "pkgs/linstor-server/default.nix"
+      ];
+      meta = with lib; {
+        description = "High Performance Software-Defined Block Storage for container, cloud and virtualisation. Fully integrated with Docker, Kubernetes, Openstack, Proxmox etc.";
+        homepage = "https://github.com/LINBIT/linstor-server";
+        license = licenses.gpl3Plus;
+        platforms = platforms.linux;
+      };
     });
 in
 lib.recurseIntoAttrs {
   linstor-controller = common "linstor-controller";
-  linstor-satellite = common "linstor-satellite";
+  linstor-satellite = (common "linstor-satellite") // {
+    passthru.updateSkip = true;
+  };
 }

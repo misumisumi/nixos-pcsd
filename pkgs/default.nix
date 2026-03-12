@@ -1,18 +1,16 @@
 final: prev: {
-  pcs = final.callPackage ./pcs { };
+  fence-agents = final.callPackage ./fence-agents { };
 
-  pcs-web-ui = final.callPackage ./pcs-web-ui { };
-
-  pacemaker = final.callPackage ./pacemaker { };
-
-  resource-agents = final.callPackage ./resource-agents { };
-
-  ocf-resource-agents = final.callPackage ./ocf-resource-agents { };
-
+  drbd9-dkms = final.callPackage ./drbd9-dkms { };
   inherit (final.callPackage ./linstor-server { }) linstor-controller linstor-satellite;
-
   linstor-client = final.callPackage ./linstor-client { };
   linstor-gui = final.callPackage ./linstor-gui { };
+
+  pcs = final.callPackage ./pcs { };
+  pcs-web-ui = final.callPackage ./pcs-web-ui { };
+  pacemaker = final.callPackage ./pacemaker { };
+  resource-agents = final.callPackage ./resource-agents { };
+  ocf-resource-agents = final.callPackage ./ocf-resource-agents { };
 
   python3 =
     let

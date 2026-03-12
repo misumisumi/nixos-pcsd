@@ -7,7 +7,7 @@ rec {
   };
 
   inputs = {
-    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
     flake-parts.url = "github:hercules-ci/flake-parts";
     devshell = {
       url = "github:numtide/devshell";
@@ -41,7 +41,7 @@ rec {
           lib,
           ...
         }:
-        {
+        rec {
           _module.args.pkgs = import inputs.nixpkgs {
             inherit system;
             overlays = [
@@ -49,8 +49,13 @@ rec {
             ];
             config.allowUnfree = true;
           };
+          # docs = pkgs.callPackage ./docs { inherit self; };
+          # formatter = pkgs.nix-fmt;
+
           packages = {
             inherit (pkgs)
+              drbd9-dkms
+              fence-agents
               linstor-client
               linstor-controller
               linstor-gui
@@ -62,8 +67,57 @@ rec {
               resource-agents
               ;
             inherit (pkgs.python3Packages) linstor-api-py pyagentx;
+            update-pkgs = import ./update-pkgs.nix {
+              inherit lib;
+              inherit (pkgs) writeShellScriptBin nix-update;
+              myPkgs = packages;
+            };
           };
-          checks = { };
+          checks = packages;
+          devshells = {
+            update = {
+              packages = with pkgs; [
+                git
+                bundler
+                bundix
+
+                common-updater-scripts
+                jq
+                nix-prefetch-git
+                nix-prefetch-github
+                nix-prefetch-scripts
+                nix-update
+              ];
+            };
+
+            docs =
+              let
+                inputs = with pkgs; [
+                  git
+                  nix
+                  mkdocs
+                  ghp-import
+                  python3Packages.mkdocs-material
+                  python3Packages.pygments
+                ];
+              in
+              {
+                packages = [
+                  (pkgs.writeShellApplication {
+                    name = "localDeploy";
+                    runtimeInputs = inputs;
+                    text = "(nix build --option binary-caches \"https://cache.nixos.org\" .#docs && cd result && mkdocs serve)";
+                  })
+
+                  (pkgs.writeShellApplication {
+                    name = "ghDeploy";
+                    runtimeInputs = inputs;
+                    text = builtins.readFile ./docs/deploy.sh;
+                  })
+                ]
+                ++ inputs;
+              };
+          };
         };
     };
 }

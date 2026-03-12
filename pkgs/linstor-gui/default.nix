@@ -14,11 +14,12 @@ buildNpmPackage rec {
     hash = "sha256-RFX2z/ST9L0oXe8oOdG5mYb6C6DuEFegOpy7hYym3WA=";
   };
 
-  npmDepsHash = "sha256-RFX2z/ST9L0oXe8oOdG5mYb6C6DuEFegOpy7hYym3WA=";
+  npmDepsHash = "sha256-i7/XW/q5vssjs95IEHZpjSGB2H56ngtVeFYga0UTs78=";
 
   meta = with lib; {
     description = "Web-Based GUI frontend for LINSTOR Resources ";
     homepage = "https://github.com/LINBIT/linstor-gui";
     license = licenses.gpl3Plus;
+    platforms = platforms.linux;
   };
 }

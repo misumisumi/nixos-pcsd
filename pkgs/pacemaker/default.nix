@@ -24,79 +24,84 @@
   forOCF ? false,
   ocf-resource-agents,
   ...
-}: let
+}:
+let
   inherit (lib) optionals;
 
+in
+stdenv.mkDerivation rec {
   pname = "pacemaker";
   version = "3.0.1";
-in
-  stdenv.mkDerivation {
-    inherit pname version;
 
-    src = fetchFromGitHub {
-      owner = "ClusterLabs";
-      repo = "pacemaker";
-      rev = "Pacemaker-${version}";
-      hash = "sha256-23YkNzqiimLy/KjO+hxVQQ4rUhSEhn5Oc2jUJO/VRo0=";
-    };
+  src = fetchFromGitHub {
+    owner = "ClusterLabs";
+    repo = "pacemaker";
+    rev = "Pacemaker-${version}";
+    hash = "sha256-23YkNzqiimLy/KjO+hxVQQ4rUhSEhn5Oc2jUJO/VRo0=";
+  };
 
-    nativeBuildInputs = [
-      autoconf
-      automake
-      libtool
-      pkg-config
-    ];
+  nativeBuildInputs = [
+    autoconf
+    automake
+    libtool
+    pkg-config
+  ];
 
-    buildInputs = [
-      bash
-      bzip2
-      corosync
-      dbus.dev
-      glib
-      gnutls
-      libqb
-      libuuid
-      libxml2.dev
-      libxslt.dev
-      pam
-      python3
-    ];
+  buildInputs = [
+    bash
+    bzip2
+    corosync
+    dbus.dev
+    glib
+    gnutls
+    libqb
+    libuuid
+    libxml2.dev
+    libxslt.dev
+    pam
+    python3
+  ];
 
-    preConfigure = ''
-      ./autogen.sh --prefix="$out"
-    '';
-    configureFlags =
-      [
-        "--exec-prefix=${placeholder "out"}"
-        "--sysconfdir=/etc"
-        "--localstatedir=/var"
-        "--with-initdir=/etc/systemd/system"
-        "--with-systemdsystemunitdir=/etc/systemd/system"
-        "--with-corosync"
-        # allows Type=notify in the systemd service
-        "--enable-systemd"
-      ]
-      ++ optionals (!forOCF) ["--with-ocfdir=${ocf-resource-agents}/usr/lib/ocf"];
+  preConfigure = ''
+    ./autogen.sh --prefix="$out"
+  '';
+  configureFlags = [
+    "--exec-prefix=${placeholder "out"}"
+    "--sysconfdir=/etc"
+    "--localstatedir=/var"
+    "--with-initdir=/etc/systemd/system"
+    "--with-systemdsystemunitdir=/etc/systemd/system"
+    "--with-corosync"
+    # allows Type=notify in the systemd service
+    "--enable-systemd"
+  ]
+  ++ optionals (!forOCF) [ "--with-ocfdir=${ocf-resource-agents}/usr/lib/ocf" ];
 
-    installFlags = ["DESTDIR=${placeholder "out"}"];
+  installFlags = [ "DESTDIR=${placeholder "out"}" ];
 
-    env.NIX_CFLAGS_COMPILE = toString (optionals stdenv.cc.isGNU [
+  env.NIX_CFLAGS_COMPILE = toString (
+    optionals stdenv.cc.isGNU [
       "-Wno-error=deprecated-declarations"
       "-Wno-error=strict-prototypes"
-    ]);
+    ]
+  );
 
-    enableParallelBuilding = true;
+  enableParallelBuilding = true;
 
-    postInstall = ''
-      # pacemaker's install linking requires a weirdly nested hierarchy
-      mv $out$out/* $out
-      rm -r $out/nix
-    '';
+  postInstall = ''
+    # pacemaker's install linking requires a weirdly nested hierarchy
+    mv $out$out/* $out
+    rm -r $out/nix
+  '';
 
-    meta = {
-      homepage = "https://clusterlabs.org/pacemaker/";
-      description = "Pacemaker is an open source, high availability resource manager suitable for both small and large clusters.";
-      license = lib.licenses.gpl2Plus;
-      platforms = lib.platforms.linux;
-    };
-  }
+  passthru.updateOptions = [
+    "--version-regex"
+    "'Pacemaker-(.*)'"
+  ];
+  meta = {
+    homepage = "https://clusterlabs.org/pacemaker/";
+    description = "Pacemaker is an open source, high availability resource manager suitable for both small and large clusters.";
+    license = lib.licenses.gpl2Plus;
+    platforms = lib.platforms.linux;
+  };
+}

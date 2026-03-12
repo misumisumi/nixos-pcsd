@@ -1,51 +1,28 @@
 #!/usr/bin/env -S nix develop .#update -c bash
 
-ARGS=("$@")
+updateLock() {
+  old_version=$1
+  nix develop ".#pcs" --unpack
 
-getLatest() {
-    major_ver="$1"
-    owner="$2"
-    repo="$3"
+  cd source
+  nix develop ".#pcs" --command bash -c "./autogen.sh && ./configure --with-distro=fedora --enable-local-build && cd .."
+  cd ..
 
-    declare -a versions
-    readarray -t versions <<< "$(curl -s "https://api.github.com/repos/$owner/$repo/releases" | jq -r 'map(.tag_name)[]')"
+  cp source/Gemfile pkgs/pcs
+  rm -rf source
 
-    regex_pattern="^$major_ver.*"
+  pushd pkgs/pcs
 
-    for version in "${versions[@]}"; do
-        if [[ "$version" =~ $regex_pattern ]]; then
-            echo "$version"
-            return
-        fi
-    done
+  rm Gemfile.lock gemset.nix
+  bundler
+  bundix
+
+  git add ./
+  git commit -m "pcs: $old_version -> $(nix eval --raw ".#pcs.version")"
+
+  popd
 }
 
-updatePackage() {
-    major_ver="$1"
-    owner="$2"
-    repo="$3"
-
-    current_version=$(nix eval --raw ".#$repo.version")
-    new_version=$(getLatest "$major_ver" "$owner" "$repo")
-
-    if [[ "$new_version" != "v$current_version" ]]; then
-        do_commit="false"
-
-        for i in "${!ARGS[@]}"; do
-            if [[ ${ARGS[i]} = "--commit" ]]; then
-                unset 'ARGS[i]'
-                do_commit="true"
-            fi
-        done
-
-        updateGems
-        nix-update --version "$new_version" --flake pcs "${ARGS[@]}"
-
-        if [[ "$do_commit" == "true" ]]; then
-            git add ./flake.lock ./pkgs/pcs
-            git commit -m "pcs: $current_version -> $(nix eval --raw ".#$repo.version")"
-        fi
-    fi
-}
-
-updatePackage "v0.12" "ClusterLabs" "pcs"
+old_version=$(nix eval --raw ".#pcs.version")
+nix-update --flake pcs
+git diff --quiet -- pkgs/pcs/default.nix || updateLock "$old_version"

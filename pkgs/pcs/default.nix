@@ -5,8 +5,7 @@
   bundlerEnv,
   fetchFromGitHub,
   # deps
-  # autoconf,
-  autoreconfHook,
+  autoconf,
   automake,
   libffi,
   libpam-wrapper,
@@ -21,13 +20,12 @@
   # overrides
   withWebUI ? false,
   pcs-web-ui ? null,
-  ...
 }:
 let
   inherit (lib) getLib optionalString;
 
   pname = "pcs";
-  version = "0.12.1";
+  version = "0.12.2";
 
   rubyEnv = bundlerEnv {
     name = "pcs-env-${version}";
@@ -38,53 +36,17 @@ in
 python3Packages.buildPythonPackage {
   inherit pname version;
 
+  pyproject = true;
+
   src = fetchFromGitHub {
     owner = "ClusterLabs";
     repo = "pcs";
     rev = "v${version}";
-    hash = "sha256-b5qIgW4akJrNThGBB54KnFpDyEA8xvyfFcHnYEZ0zW0=";
+    hash = "sha256-NWG0PS/Zi0iepXQfczhODXzZJXejeKbfhNMpE9duZDo=";
   };
 
   # Curl test assumes network access
   doCheck = false;
-  pyproject = true;
-  build-system = with python3Packages; [ setuptools ];
-
-  buildInputs = [
-    libpam-wrapper
-    ruby
-    psmisc
-    corosync
-    nss.tools
-    systemd
-    pacemaker
-  ];
-  propagatedBuildInputs = with python3Packages; [
-    cryptography
-    dateutil
-    lxml
-    pycurl
-    pyparsing
-    tornado
-    dacite
-    pyagentx
-    libffi
-  ];
-
-  nativeBuildInputs = [
-    autoreconfHook
-    automake
-    nss.tools
-    pkg-config
-    psmisc
-    rubyEnv
-    rubyEnv.wrappedRuby
-    rubyEnv.bundler
-    systemd
-  ];
-  propagatedNativeBuildInputs = with python3Packages; [
-    pip
-  ];
 
   postUnpack = ''
     # Fix version of untagged build
@@ -124,6 +86,39 @@ python3Packages.buildPythonPackage {
      '$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/lib/pcsd' ""
   '';
 
+  propagatedBuildInputs = [
+    libpam-wrapper
+    ruby
+    psmisc
+    corosync
+    nss.tools
+    systemd
+    pacemaker
+  ]
+  ++ (with python3Packages; [
+    cryptography
+    python-dateutil
+    lxml
+    pycurl
+    setuptools
+    setuptools-scm
+    pyparsing
+    tornado
+    dacite
+  ]);
+
+  nativeBuildInputs = [
+    autoconf
+    automake
+    nss.tools
+    pkg-config
+    psmisc
+    rubyEnv
+    rubyEnv.wrappedRuby
+    rubyEnv.bundler
+    systemd
+  ];
+
   preConfigure = ''
     ./autogen.sh
   '';
@@ -136,16 +131,16 @@ python3Packages.buildPythonPackage {
     "--localstatedir=/var"
   ];
 
-  # buildInputs = with python3Packages; [
-  #   pyagentx
-  #   libffi
-  # ];
-  # ++ (with python3Packages; [
-  #   pip
-  #   setuptools
-  #   setuptools_scm
-  #   wheel
-  # ]);
+  buildInputs = [
+    libffi
+  ]
+  ++ (with python3Packages; [
+    pip
+    pyagentx
+    setuptools
+    setuptools-scm
+    wheel
+  ]);
 
   installPhase = ''
     runHook preInstall
@@ -161,5 +156,8 @@ python3Packages.buildPythonPackage {
     ln -s ${pcs-web-ui}/lib/pcsd/public $out/lib/pcsd/public
   '';
 
-  passthru.updateScript = ./update.sh;
+  passthru = {
+    updateScript = ./update.sh;
+    updateOptions = [ "--use-update-script" ];
+  };
 }
