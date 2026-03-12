@@ -1,20 +1,26 @@
 {
   stdenv,
   lib,
-  fetchurl,
+  fetchFromGitHub,
   nukeReferences,
   gitMinimal,
   coccinelle,
   linuxPackages,
   kernel ? linuxPackages.kernel,
 }:
-
+let
+  version = "9.3.1";
+in
 stdenv.mkDerivation {
   pname = "drbd9-dkms";
-  version = "9.1.23";
-  src = fetchurl {
-    url = "https://pkg.linbit.com//downloads/drbd/9/drbd-9.1.23.tar.gz";
-    sha256 = "sha256-Jyc8ltaNY5m9wPmiFYHE6+Z/s4cgblX4cn0FWVuvHK4=";
+  inherit version;
+  src = fetchFromGitHub {
+    owner = "LINBIT";
+    repo = "drbd";
+    rev = "drbd-${version}";
+    fetchSubmodules = true;
+    leaveDotGit = true;
+    sha256 = "sha256-VWQA+sfppeXhWLYoT/2D+CSS4KQ1LYmtycyJb86tVlQ=";
   };
 
   hardeningDisable = [
@@ -46,6 +52,10 @@ stdenv.mkDerivation {
       done
   '';
 
+  passthru.updateOptions = [
+    "--version-regex"
+    "'drbd-(.*)'"
+  ];
   meta = with lib; {
     description = "A kernel module of drbd9";
     homepage = "https://github.com/LINBIT/drbd";

@@ -1,8 +1,7 @@
 {
-  name,
-  pkgSources,
   lib,
   stdenv,
+  fetchFromGitHub,
   amtterm,
   automake,
   autoreconfHook,
@@ -27,7 +26,7 @@
   openwsman,
   patchelf,
   pkg-config,
-  pythonPackages,
+  python3Packages,
   sg3_utils,
   sudo,
   systemd,
@@ -36,7 +35,7 @@
   agents ? "all",
 }:
 let
-  pythonEnv = pythonPackages.python.withPackages (
+  pythonEnv = python3Packages.python.withPackages (
     p: with p; [
       boto3
       pexpect
@@ -48,8 +47,15 @@ let
   );
 in
 stdenv.mkDerivation rec {
-  inherit (pkgSources."${name}") pname src;
-  version = lib.removePrefix "v" pkgSources."${name}".version;
+  pname = "fence-agents";
+  version = "4.17.0";
+  src = fetchFromGitHub {
+    owner = "ClusterLabs";
+    repo = "fence-agents";
+    rev = "v${version}";
+    sha256 = "sha256-vVpDG+97CYjdJI+ZyUP6qyAu3cRtwsUupmkfO/pgsuQ=";
+  };
+
   nativeBuildInputs = [
     automake
     autoreconfHook
@@ -86,7 +92,7 @@ stdenv.mkDerivation rec {
     time
   ];
   runtimeDependencies = [ (lib.getLib systemd) ];
-  propagatedBuildInputs = with pythonPackages; [
+  propagatedBuildInputs = with python3Packages; [
     boto3
     pexpect
     pycurl
@@ -94,7 +100,7 @@ stdenv.mkDerivation rec {
     kubernetes
     aliyun-python-sdk-core
   ];
-  pythonPath = with pythonPackages; [
+  pythonPath = with python3Packages; [
     boto3
     pexpect
     pycurl
