@@ -12,6 +12,7 @@ final: prev: {
   inherit (final.callPackage ./linstor-server { }) linstor-controller linstor-satellite;
 
   linstor-client = final.callPackage ./linstor-client { };
+  linstor-gui = final.callPackage ./linstor-gui { };
 
   python3 =
     let

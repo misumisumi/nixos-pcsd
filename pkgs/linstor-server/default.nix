@@ -1,14 +1,13 @@
 {
   lib,
   stdenv,
-  gradle_8,
+  gradle,
   protobuf_31,
   openjdk11,
   makeWrapper,
   fetchFromGitHub,
   python3,
   runtimeShell,
-  recurseIntoAttrs,
 }:
 let
   version = "1.32.3";
@@ -28,7 +27,7 @@ let
       };
 
       nativeBuildInputs = [
-        gradle_8
+        gradle
         makeWrapper
         protobuf_31
         python3
@@ -56,8 +55,8 @@ let
       ];
 
       # if the package has dependencies, mitmCache must be set
-      mitmCache = gradle_8.fetchDeps {
-        inherit (finalAttrs) pname;
+      mitmCache = gradle.fetchDeps {
+        pkg = finalAttrs.finalPackage;
         data = ./deps.json;
       };
 
@@ -101,7 +100,7 @@ let
       '';
     });
 in
-recurseIntoAttrs {
+lib.recurseIntoAttrs {
   linstor-controller = common "linstor-controller";
   linstor-satellite = common "linstor-satellite";
 }

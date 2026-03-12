@@ -1,14 +1,16 @@
 {
   python3Packages,
   fetchFromGitHub,
-  ...
 }:
-python3Packages.buildPythonPackage {
+let
+  inherit (python3Packages) buildPythonPackage;
+in
+buildPythonPackage {
   pname = "pyagentx";
-  version = "0.0.0+8fcc2f05";
+  version = "0.4.pcs.2";
 
   pyproject = true;
-  build-system = with python3Packages; [setuptools];
+  build-system = with python3Packages; [ setuptools ];
 
   src = fetchFromGitHub {
     owner = "ondrejmular";
