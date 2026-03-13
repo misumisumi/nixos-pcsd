@@ -2,11 +2,13 @@
   stdenv,
   lib,
   fetchFromGitHub,
-  nukeReferences,
-  gitMinimal,
   coccinelle,
+  flex,
+  gitMinimal,
+  python3,
   linuxPackages,
   kernel ? linuxPackages.kernel,
+  kernelModuleMakeFlags ? linuxPackages.kernelModuleMakeFlags,
 }:
 let
   version = "9.3.1";
@@ -27,29 +29,33 @@ stdenv.mkDerivation {
     "pic"
     "format"
   ];
+
   nativeBuildInputs = [
-    nukeReferences
-    gitMinimal
     coccinelle
-  ]
-  ++ kernel.moduleBuildDependencies;
+    flex
+    gitMinimal
+    kernel.moduleBuildDependencies
+    python3
+  ];
 
   kernel = kernel.dev;
   kernelVersion = kernel.modDirVersion;
 
-  makeFlags = [
-    "KVER=${kernel.modDirVersion}"
+  enableParallelBuilding = true;
+
+  makeFlags = kernelModuleMakeFlags ++ [
     "KDIR=${kernel.dev}/lib/modules/${kernel.modDirVersion}/build"
-    "ARCH=x86"
-    "DESTDIR=$(out)"
+    "KVER=${kernel.version}"
+    "INSTALL_MOD_PATH=${placeholder "out"}"
+    "M=$(sourceRoot)"
+    "SPAAS=false"
   ];
 
-  installPhase = ''
-    mkdir -p $out/lib/modules/$kernelVersion/updates
-      for x in $(find . -name '*.ko'); do
-        nuke-refs $x
-        cp $x $out/lib/modules/$kernelVersion/updates/
-      done
+  installFlags = [ "INSTALL_MOD_PATH=${placeholder "out"}" ];
+
+  postPatch = ''
+    patchShebangs .
+    substituteInPlace Makefile --replace 'SHELL=/bin/bash' 'SHELL=${builtins.getEnv "SHELL"}'
   '';
 
   passthru.updateOptions = [

@@ -16,6 +16,22 @@ buildNpmPackage rec {
 
   npmDepsHash = "sha256-i7/XW/q5vssjs95IEHZpjSGB2H56ngtVeFYga0UTs78=";
 
+  buildPhase = ''
+    runHook preBuild
+    npmBuildHook
+    runHook postBuild
+  '';
+
+  installPhase = ''
+    runHook preInstall
+
+    mkdir -p $out
+    cp -r dist $out/ui
+    cp -r node_modules $out
+
+    runHook postInstall
+  '';
+
   meta = with lib; {
     description = "Web-Based GUI frontend for LINSTOR Resources ";
     homepage = "https://github.com/LINBIT/linstor-gui";
