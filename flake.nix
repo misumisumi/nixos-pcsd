@@ -23,9 +23,10 @@ rec {
       ];
       flake = {
         nixosModules = {
-          pacemaker = import ./modules/pacemaker.nix self;
-          pcsd = import ./modules self nixConfig;
-          default = self.nixosModules.pcsd;
+          linstor = import ./modules/linstor;
+          pacemaker = import ./modules/pacemaker.nix;
+          pcsd = import ./modules/pcsd.nix;
+          default = import ./modules;
         };
         overlay = self.overlays.default;
         overlays.default = import ./pkgs;
@@ -121,104 +122,3 @@ rec {
         };
     };
 }
-# let
-#   perSystem =
-#     attrs:
-#     nixpkgs.lib.genAttrs (import systems) (
-#       system:
-#       attrs (
-#         import nixpkgs {
-#           inherit system;
-#           overlays = [ self.overlays.default ];
-#         }
-#       )
-#     );
-# in
-# {
-#   packages = perSystem (pkgs: rec {
-#     default = pcs;
-#     docs = pkgs.callPackage ./docs { inherit self; };
-
-#     inherit (pkgs)
-#       pcs
-#       pcs-web-ui
-#       pacemaker
-#       resource-agents
-#       ocf-resource-agents
-#       linstor-controller
-#       linstor-satellite
-#       linstor-client
-#       linstor-gui
-#       ;
-#     inherit (pkgs.python3Packages) linstor-api-py pyagentx;
-#   });
-
-#   overlays = {
-#     pcsd = import ./pkgs;
-#     default = self.overlays.pcsd;
-#   };
-
-#   formatter = perSystem (pkgs: pkgs.alejandra);
-
-#   devShells = perSystem (pkgs: {
-#     update = pkgs.mkShell {
-#       packages = with pkgs; [
-#         alejandra
-#         git
-#         bundler
-#         bundix
-
-#         (writeShellApplication {
-#           name = "updateGems";
-#           runtimeInputs = [
-#             bundler
-#             bundix
-#           ];
-
-#           text = ''
-#             cd ./pkgs/pcs || exit
-#             rm Gemfile.lock gemset.nix
-#             bundler
-#             bundix
-#           '';
-#         })
-
-#         common-updater-scripts
-#         jq
-#         nix-prefetch-git
-#         nix-prefetch-github
-#         nix-prefetch-scripts
-#         nix-update
-#       ];
-#     };
-
-#     docs =
-#       let
-#         inputs = with pkgs; [
-#           git
-#           nix
-#           mkdocs
-#           ghp-import
-#           python3Packages.mkdocs-material
-#           python3Packages.pygments
-#         ];
-#       in
-#       pkgs.mkShell {
-#         packages = [
-#           (pkgs.writeShellApplication {
-#             name = "localDeploy";
-#             runtimeInputs = inputs;
-#             text = "(nix build --option binary-caches \"https://cache.nixos.org\" .#docs && cd result && mkdocs serve)";
-#           })
-
-#           (pkgs.writeShellApplication {
-#             name = "ghDeploy";
-#             runtimeInputs = inputs;
-#             text = builtins.readFile ./docs/deploy.sh;
-#           })
-#         ]
-#         ++ inputs;
-#       };
-#   });
-# };
-# }
