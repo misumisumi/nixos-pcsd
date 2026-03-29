@@ -5,10 +5,11 @@
 }:
 let
   inherit (python3Packages) buildPythonApplication;
-in
-buildPythonApplication rec {
-  pname = "linstor-client";
   version = "1.27.1";
+in
+buildPythonApplication {
+  pname = "linstor-client";
+  inherit version;
 
   src = fetchFromGitHub {
     owner = "LINBIT";

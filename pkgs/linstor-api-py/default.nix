@@ -5,10 +5,11 @@
 }:
 let
   inherit (python3Packages) buildPythonPackage;
-in
-buildPythonPackage rec {
-  pname = "linstor-api-py";
   version = "1.27.1";
+in
+buildPythonPackage {
+  pname = "linstor-api-py";
+  inherit version;
   src = fetchFromGitHub {
     owner = "LINBIT";
     repo = "linstor-api-py";

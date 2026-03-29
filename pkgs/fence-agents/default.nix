@@ -45,10 +45,11 @@ let
       aliyun-python-sdk-core
     ]
   );
-in
-stdenv.mkDerivation rec {
-  pname = "fence-agents";
   version = "4.17.0";
+in
+stdenv.mkDerivation {
+  pname = "fence-agents";
+  inherit version;
   src = fetchFromGitHub {
     owner = "ClusterLabs";
     repo = "fence-agents";

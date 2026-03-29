@@ -3,9 +3,12 @@
   buildNpmPackage,
   fetchFromGitHub,
 }:
-buildNpmPackage rec {
-  pname = "linstor-gui";
+let
   version = "2.3.0";
+in
+buildNpmPackage {
+  pname = "linstor-gui";
+  inherit version;
 
   src = fetchFromGitHub {
     owner = "LINBIT";
