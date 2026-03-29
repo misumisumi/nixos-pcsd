@@ -60,8 +60,10 @@ rec {
               fence-agents
               linstor-client
               linstor-controller
+              linstor-gateway
               linstor-gui
               linstor-satellite
+              thin-send-recv
               ocf-resource-agents
               pacemaker
               pcs

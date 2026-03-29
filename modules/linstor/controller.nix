@@ -20,9 +20,6 @@ in
   options.services.linstor.controller = {
     enable = mkEnableOption "linstor-controller";
 
-    package = mkPackageOption pkgs "linstor-controller" { };
-    drbd.package = mkPackageOption pkgs "drbd9-dkms" { };
-
     webui.enable = mkEnableOption "Enable the LINSTOR WebUI";
 
     logDir = mkOption {
@@ -37,37 +34,20 @@ in
   config = mkIf cfg.enable {
     assertions = [
       {
-        assertion = !config.services.linstor.satellite.enable;
+        assertion = config.services.linstor.client.enable;
         message = ''
-          Cannot enable both services.linstor.controller and services.linstor.satellite at the same time.
-        '';
-      }
-      {
-        assertion = !config.services.drbd.enable;
-        message = ''
-          Cannot enable both services.linstor.controller and services.drbd at the same time.
+          services.linstor.controller needs services.linstor.client to be enabled.
         '';
       }
     ];
-
-    environment.systemPackages = [ pkgs.drbd ];
-
-    services.udev.packages = [ pkgs.drbd ];
-
-    boot = {
-      extraModulePackages = [
-        config.services.linstor.controller.drbd.package
-      ];
-      kernelModules = [
-        "drbd"
-      ];
-    };
 
     networking.firewall.allowedTCPPorts = [
       3370
     ];
 
-    services.lvm.enable = true;
+    environment.systemPackages = [
+      pkgs.linstor-controller
+    ];
 
     systemd.services.linstor-controller = {
       description = "LINSTOR Controller Service";

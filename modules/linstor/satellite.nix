@@ -20,6 +20,7 @@ in
     enable = mkEnableOption "linstor-satellite";
 
     package = mkPackageOption pkgs "linstor-satellite" { };
+
     logDir = mkOption {
       type = path;
       default = "/var/log/linstor-satellite";
@@ -32,45 +33,36 @@ in
   config = mkIf cfg.enable {
     assertions = [
       {
-        assertion = !config.services.linstor.controller.enable;
+        assertion = config.services.linstor.client.enable;
         message = ''
-          Cannot enable both services.linstor.controller and services.linstor.satellite at the same time.
-        '';
-      }
-      {
-        assertion = !config.services.drbd.enable;
-        message = ''
-          Cannot enable both services.linstor.controller and services.drbd at the same time.
+          services.linstor.controller needs services.linstor.client to be enabled.
         '';
       }
     ];
-
-    environment.systemPackages = [ pkgs.drbd ];
-
-    services.udev.packages = [ pkgs.drbd ];
-
-    boot.kernelModules = [ "drbd" ];
 
     networking.firewall.allowedTCPPorts = [
       3366
       3367
     ];
 
+    services.lvm.enable = true;
+
     systemd.services.linstor-satellite = {
       description = "LINSTOR Satellite Service";
       wants = [ "network-online.target" ];
       after = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
-      startLimitIntervalSec = 40;
+      startLimitIntervalSec = 60;
       startLimitBurst = 10;
       serviceConfig = {
-        Type = "notify";
+        Type = "simple";
         #TODO: services.linstor.clientから設定するか、対話形式で変更可能かを制御できるようにする
-        ExecStart = "${pkgs.linstor-satellite}/bin/Satellite --logs=${cfg.logDir} -config-directory=/etc/linstor";
+        ExecStart = "${pkgs.linstor-satellite}/bin/Satellite --logs=${cfg.logDir} --config-directory=/etc/linstor";
         KillMode = "mixed"; # send SIGTERM only to satellite, send SIGKILL to all spawned processes
-        SuccessExitStatus = "0 143 129"; # if killed by signal 143 -> SIGTERM, 129 -> SIGHUP
         PrivateTmp = true;
+        SuccessExitStatus = "0 143 129"; # if killed by signal 143 -> SIGTERM, 129 -> SIGHUP
         TimeoutStartSec = 70;
+        User = "root";
       };
     };
   };

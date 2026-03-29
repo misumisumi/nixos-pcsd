@@ -32,15 +32,6 @@ in
   };
 
   config = mkIf true {
-    assertions = [
-      {
-        assertion = config.services.linstor.controller.enable;
-        message = ''
-          Enabling services.linstor.controller.enable requires a services.linstor.client configuration.
-        '';
-      }
-    ];
-
     environment.systemPackages = [
       cfg.package
     ];
