@@ -1,6 +1,7 @@
 final: prev: {
   fence-agents = final.callPackage ./fence-agents { };
 
+  drbd-reactor = final.callPackage ./drbd-reactor { };
   drbd9-dkms = final.callPackage ./drbd9-dkms { };
   inherit (final.callPackage ./linstor-server { }) linstor-controller linstor-satellite;
   linstor-client = final.callPackage ./linstor-client { };

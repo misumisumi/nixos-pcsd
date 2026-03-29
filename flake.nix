@@ -55,6 +55,7 @@ rec {
 
           packages = {
             inherit (pkgs)
+              drbd-reactor
               drbd9-dkms
               fence-agents
               linstor-client
