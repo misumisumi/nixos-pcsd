@@ -22,7 +22,7 @@ stdenv.mkDerivation {
     rev = "drbd-${version}";
     fetchSubmodules = true;
     leaveDotGit = true;
-    sha256 = "sha256-VWQA+sfppeXhWLYoT/2D+CSS4KQ1LYmtycyJb86tVlQ=";
+    sha256 = "sha256-IzMRPbCQ8RvXo9fVY5fCNzBsvRaUe0iNmp4Ft4YGpug=";
   };
 
   hardeningDisable = [

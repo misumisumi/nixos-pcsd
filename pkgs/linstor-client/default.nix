@@ -1,6 +1,7 @@
 {
   lib,
   fetchFromGitHub,
+  bash-completion,
   python3Packages,
 }:
 let
@@ -10,6 +11,10 @@ in
 buildPythonApplication {
   pname = "linstor-client";
   inherit version;
+  outputs = [
+    "out"
+    "man"
+  ];
 
   src = fetchFromGitHub {
     owner = "LINBIT";
@@ -26,10 +31,18 @@ buildPythonApplication {
 
   pyproject = true;
   build-system = with python3Packages; [ setuptools ];
-  propagatedBuildInputs = with python3Packages; [
-    linstor-api-py
-    distutils
+  buildInputs = [
+    bash-completion
   ];
+  propagatedBuildInputs = with python3Packages; [
+    argcomplete
+    distutils
+    linstor-api-py
+  ];
+  postInstall = ''
+    mkdir -p $out/share/man
+
+  '';
 
   meta = with lib; {
     description = "Python client for LINSTOR";

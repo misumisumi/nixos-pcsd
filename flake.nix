@@ -55,6 +55,7 @@ rec {
 
           packages = {
             inherit (pkgs)
+              drbd
               drbd-reactor
               drbd9-dkms
               fence-agents

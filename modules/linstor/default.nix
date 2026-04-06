@@ -1,5 +1,6 @@
 {
   imports = [
+    ./cluster
     ./client.nix
     ./controller.nix
     ./drbd.nix

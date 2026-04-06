@@ -5,16 +5,15 @@
   ...
 }:
 let
-  inherit (builtins) dirOf;
   inherit (lib)
     mkEnableOption
     mkIf
-    mkPackageOption
     mkOption
+    mkPackageOption
     ;
-  # inherit (lib.types) str;
 
   cfg = config.services.linstor.client;
+  iniFormat = pkgs.formats.ini { };
 in
 {
   options.services.linstor.client = {
@@ -22,18 +21,24 @@ in
 
     package = mkPackageOption pkgs "linstor-client" { };
 
-    # config = mkOption {
-    #   type = str;
-    #   default = "";
-    #   description = ''
-    #     Configuration linstor
-    #   '';
-    # };
+    settings = mkOption {
+      inherit (iniFormat) type;
+      default = { };
+      description = ''
+        Configuration linstor
+      '';
+    };
   };
 
   config = mkIf true {
-    environment.systemPackages = [
-      cfg.package
-    ];
+    environment = {
+      systemPackages = [
+        cfg.package
+      ];
+      etc."linstor/linstor-client.conf" = {
+        enable = cfg.settings != { };
+        source = iniFormat.generate "linstor-client.conf" cfg.settings;
+      };
+    };
   };
 }
